@@ -13,7 +13,7 @@ class BC_2D:
     def __init__(self, left, right, up, down):
         """
         Args:
-            left, right, up, down: (alpha, beta, f(t))
+            left, right, up, down: (alpha, beta, f(x,y,t))
         """
         # alpha*u + beta*u_x + gamma*u_y = f(t)
         self.left_alpha, self.left_beta, self.left_func = left
@@ -98,25 +98,28 @@ class ContConduct:
             raise ValueError(f'Improper setting for time steps and grid steps. The factor is {factor} and unstability will occur! Consider decrease the time step or increase the grid step.')
 
 class Heat2dSimu:
-    def __init__(self, map_shape, dx, total_time, tstep, bc, ic, c, plot_step, Q=0, device='cpu', do_progress_bar=True, dtype=torch.float32):
+    def __init__(self, map_shape, dx, total_time, dt, bc, ic, c, plot_step, Q=0, device='cpu', do_progress_bar=True, dtype=torch.float32):
         """
         Args:
             map_shape (tuple): Physical size of the 2D domain.
-            step (float): Step size of *interior* points (excluding boundaries).
-            total_time (float): End time for the simulation.
-            tstep (int): Step size of time.
-            bc (iterable): Boundary condition with 4 elements. Order: up, r down, left, right.
+            dx (number types supported by Pytorch): Step size of *interior* points (excluding boundaries).
+            total_time (number types supported by Pytorch): End time for the simulation.
+            dt (number types supported by Pytorch): Step size of time.
+            bc (BC_2D): Boundary condition with 4 elements. Order: up, r down, left, right.
             ic (callable): Function for initial condition.
-            c (float): Diffusion coefficient.
+            c (ContConduct or number types supported by Pytorch): Diffusion coefficient.
             plot_step (int): How often (in steps) to plot the solution.
+            Q (callable(x,y,t) or number types supported by Pytorch): heat source.
             device (str): 'cpu' or 'cuda', which device to use for Tensor operations.
+            do_progress_bar (bool): whether to disable progress bar during simulation.
+            dtype (torch.dtype): data type for simulation. Strongly recommend not to use float16. It give shit results.
         """
         self.grid = None
         self.grid_bach = None
         self.map_shape = map_shape
         self.dx = dx
         self.total_time = total_time
-        self.dt = tstep
+        self.dt = dt
         self.bc = bc
         self.ic = ic
         self.c = c
